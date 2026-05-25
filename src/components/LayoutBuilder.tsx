@@ -12,7 +12,6 @@ export default function LayoutBuilder() {
   const [selectedPins, setSelectedPins] = useState<PinRule[]>([]);
   const [showDiagram, setShowDiagram] = useState(false);
 
-  // Always include mandatory pins (DAR Insignia)
   const mandatoryPins = PIN_RULES.filter((p) => p.mandatory);
   const allPinsForLayout = useMemo(
     () => [...mandatoryPins, ...selectedPins],
@@ -54,54 +53,110 @@ export default function LayoutBuilder() {
     setSelectedPins((prev) => [...prev, customPin]);
   };
 
+  const inputStyle = {
+    padding: '0.5rem 0.75rem',
+    marginTop: '0.25rem',
+    background: 'rgba(255,255,255,0.08)',
+    border: '1px solid rgba(212,175,55,0.3)',
+    borderRadius: '6px',
+    color: '#e8edf5',
+    fontSize: '0.9rem',
+    outline: 'none',
+  };
+
   return (
-    <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '1.5rem' }}>
-      <h1 style={{ marginBottom: '0.25rem' }}>DAR Pin Layout Builder</h1>
-      <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-        Placement guidance based on uploaded manuals. Confirm with current DAR Insignia rules before wearing.
-      </p>
+    <div style={{
+      maxWidth: '850px',
+      margin: '0 auto',
+      padding: '3rem 2rem 2.5rem',
+    }}>
+      {/* Header */}
+      <div style={{
+        textAlign: 'center',
+        marginBottom: '2rem',
+        background: '#ffffff',
+        margin: '0 -2rem 2rem -2rem',
+        padding: '2.5rem 2rem 2rem',
+        borderRadius: '12px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+      }}>
+        <h1 style={{
+          fontFamily: "'Playfair Display', serif",
+          fontSize: '2rem',
+          fontWeight: 700,
+          color: '#1a2f5a',
+          letterSpacing: '0.5px',
+          marginBottom: '0.5rem',
+        }}>
+          DAR Pin Layout Builder
+        </h1>
+        <p style={{
+          color: '#555',
+          fontSize: '0.85rem',
+          fontStyle: 'italic',
+        }}>
+          Placement guidance based on uploaded manuals. Confirm with current DAR Insignia rules before wearing.
+        </p>
+      </div>
 
-      {/* Ribbon config */}
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-        <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
-          Ribbon row count
-          <select
-            value={rowCount}
-            onChange={(e) => setRowCount(Number(e.target.value) as 1 | 2 | 3 | 4)}
-            style={{ padding: '0.3rem', marginTop: '0.25rem' }}
-          >
-            <option value={1}>1 row</option>
-            <option value={2}>2 rows</option>
-            <option value={3}>3 rows</option>
-            <option value={4}>4 rows</option>
-          </select>
-        </label>
+      {/* Ribbon config card */}
+      <div style={{
+        background: 'rgba(255,255,255,0.1)',
+        border: '1px solid rgba(255,255,255,0.2)',
+        borderRadius: '12px',
+        padding: '1.25rem 1.5rem',
+        marginBottom: '1.5rem',
+      }}>
+        <h2 style={{
+          fontFamily: "'Playfair Display', serif",
+          fontSize: '1.1rem',
+          color: '#d4af37',
+          marginBottom: '1rem',
+          fontWeight: 600,
+        }}>
+          Ribbon Configuration
+        </h2>
+        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>
+            Row count
+            <select
+              value={rowCount}
+              onChange={(e) => setRowCount(Number(e.target.value) as 1 | 2 | 3 | 4)}
+              style={{ ...inputStyle, width: '7rem' }}
+            >
+              <option value={1}>1 row</option>
+              <option value={2}>2 rows</option>
+              <option value={3}>3 rows</option>
+              <option value={4}>4 rows</option>
+            </select>
+          </label>
 
-        <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
-          Ribbon length (inches)
-          <input
-            type="number"
-            step="0.25"
-            min="1"
-            max="24"
-            value={ribbonLength}
-            onChange={(e) => setRibbonLength(parseFloat(e.target.value))}
-            style={{ width: '5rem', padding: '0.3rem', marginTop: '0.25rem' }}
-          />
-        </label>
+          <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>
+            Length (inches)
+            <input
+              type="number"
+              step="0.25"
+              min="1"
+              max="24"
+              value={ribbonLength}
+              onChange={(e) => setRibbonLength(parseFloat(e.target.value))}
+              style={{ ...inputStyle, width: '6rem' }}
+            />
+          </label>
 
-        <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.85rem' }}>
-          Ribbon width (inches)
-          <input
-            type="number"
-            step="0.125"
-            min="0.5"
-            max="4"
-            value={ribbonWidth}
-            onChange={(e) => setRibbonWidth(parseFloat(e.target.value))}
-            style={{ width: '5rem', padding: '0.3rem', marginTop: '0.25rem' }}
-          />
-        </label>
+          <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>
+            Width (inches)
+            <input
+              type="number"
+              step="0.125"
+              min="0.5"
+              max="4"
+              value={ribbonWidth}
+              onChange={(e) => setRibbonWidth(parseFloat(e.target.value))}
+              style={{ ...inputStyle, width: '6rem' }}
+            />
+          </label>
+        </div>
       </div>
 
       {/* Pin selection */}
@@ -111,13 +166,17 @@ export default function LayoutBuilder() {
       <button
         onClick={() => setShowDiagram(true)}
         style={{
-          padding: '0.5rem 1.5rem',
-          background: '#0066cc',
-          color: '#fff',
+          padding: '0.65rem 2rem',
+          background: 'linear-gradient(135deg, #d4af37 0%, #b8960c 100%)',
+          color: '#0a1628',
           border: 'none',
-          borderRadius: '4px',
+          borderRadius: '8px',
           cursor: 'pointer',
-          fontSize: '0.9rem',
+          fontSize: '0.95rem',
+          fontWeight: 600,
+          letterSpacing: '0.3px',
+          boxShadow: '0 4px 15px rgba(212,175,55,0.3)',
+          transition: 'transform 0.1s, box-shadow 0.1s',
         }}
       >
         Generate Layout

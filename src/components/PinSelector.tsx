@@ -15,6 +15,15 @@ const CATEGORIES: Record<string, string> = {
   other: 'Other',
 };
 
+const CATEGORY_COLORS: Record<string, string> = {
+  membership: '#1565c0',
+  officer: '#6a1b9a',
+  ancestor: '#2e7d32',
+  service: '#e65100',
+  honorary: '#c62828',
+  other: '#546e7a',
+};
+
 export default function PinSelector({ selectedPins, onTogglePin }: Props) {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -23,11 +32,18 @@ export default function PinSelector({ selectedPins, onTogglePin }: Props) {
     selectedPins.some((p) => p.id === pin.id);
 
   const filtered = PIN_RULES.filter((pin) => {
-    if (pin.mandatory) return false; // mandatory pins shown separately
+    if (pin.mandatory) return false;
     const matchesSearch = pin.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = filterCategory === 'all' || pin.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // Group filtered pins by category
+  const grouped: Record<string, PinRule[]> = {};
+  for (const pin of filtered) {
+    if (!grouped[pin.category]) grouped[pin.category] = [];
+    grouped[pin.category].push(pin);
+  }
 
   const mandatoryPins = PIN_RULES.filter((p) => p.mandatory);
 
@@ -89,10 +105,10 @@ export default function PinSelector({ selectedPins, onTogglePin }: Props) {
           ` · ${selectedPins.filter(p => !p.mandatory).length} selected`}
       </p>
 
-      {/* Scrollable pin list */}
+      {/* Scrollable pin list grouped by category */}
       <div style={{
-        maxHeight: '280px',
-        overflowY: 'auto',
+        maxHeight: '360px',
+        overflowY: 'scroll',
         border: '1px solid #ddd',
         borderRadius: '4px',
         background: '#fff',
@@ -102,42 +118,75 @@ export default function PinSelector({ selectedPins, onTogglePin }: Props) {
             No pins match your search.
           </p>
         ) : (
-          filtered.map((pin) => (
-            <button
-              key={pin.id}
-              onClick={() => onTogglePin(pin)}
-              aria-pressed={isSelected(pin)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                width: '100%',
-                padding: '0.5rem 0.75rem',
-                border: 'none',
-                borderBottom: '1px solid #eee',
-                background: isSelected(pin) ? '#e6f0ff' : '#fff',
-                cursor: 'pointer',
-                textAlign: 'left',
-                fontSize: '0.85rem',
-              }}
-            >
-              <span>
-                <strong>{pin.name}</strong>
-                <span style={{ color: '#888', marginLeft: '0.5rem' }}>
-                  {pin.widthInches}" × {pin.heightInches}"
-                </span>
-              </span>
-              <span style={{
-                fontSize: '0.75rem',
-                padding: '0.15rem 0.4rem',
-                borderRadius: '3px',
-                background: isSelected(pin) ? '#0066cc' : '#eee',
-                color: isSelected(pin) ? '#fff' : '#666',
-              }}>
-                {isSelected(pin) ? '✓ Added' : CATEGORIES[pin.category] || pin.category}
-              </span>
-            </button>
-          ))
+          Object.entries(CATEGORIES).map(([catKey, catLabel]) => {
+            const pins = grouped[catKey];
+            if (!pins || pins.length === 0) return null;
+            return (
+              <div key={catKey}>
+                {/* Category header */}
+                <div style={{
+                  position: 'sticky',
+                  top: 0,
+                  padding: '0.4rem 0.75rem',
+                  background: '#f5f5f5',
+                  borderBottom: '1px solid #ddd',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: CATEGORY_COLORS[catKey] || '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  zIndex: 1,
+                }}>
+                  <span style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: CATEGORY_COLORS[catKey] || '#333',
+                    display: 'inline-block',
+                  }} />
+                  {catLabel} ({pins.length})
+                </div>
+                {/* Pins in this category */}
+                {pins.map((pin) => (
+                  <button
+                    key={pin.id}
+                    onClick={() => onTogglePin(pin)}
+                    aria-pressed={isSelected(pin)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: 'none',
+                      borderBottom: '1px solid #eee',
+                      background: isSelected(pin) ? '#e6f0ff' : '#fff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    <span>
+                      <strong>{pin.name}</strong>
+                      <span style={{ color: '#888', marginLeft: '0.5rem' }}>
+                        {pin.widthInches}" × {pin.heightInches}"
+                      </span>
+                    </span>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      padding: '0.15rem 0.4rem',
+                      borderRadius: '3px',
+                      background: isSelected(pin) ? '#0066cc' : '#eee',
+                      color: isSelected(pin) ? '#fff' : '#666',
+                    }}>
+                      {isSelected(pin) ? '✓ Added' : '+'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            );
+          })
         )}
       </div>
     </div>
