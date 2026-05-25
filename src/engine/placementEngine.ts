@@ -30,13 +30,17 @@ export function generateLayout(
   const citations: string[] = [];
   const placements: PlacedPin[] = [];
 
-  // Group pins by their best-fit row
+  // Separate mandatory pins (placed at bottom) from regular pins
+  const mandatoryPins = selectedPins.filter((p) => p.mandatory);
+  const regularPins = selectedPins.filter((p) => !p.mandatory);
+
+  // Group regular pins by their best-fit row
   const rowBuckets: Map<number, PinRule[]> = new Map();
   for (let r = 1; r <= config.rowCount; r++) {
     rowBuckets.set(r, []);
   }
 
-  for (const pin of selectedPins) {
+  for (const pin of regularPins) {
     const validRows = pin.allowedRows.filter((r) => r <= config.rowCount);
     if (validRows.length === 0) {
       warnings.push(
@@ -65,14 +69,25 @@ export function generateLayout(
     }
   }
 
-  // Convert buckets to placements with x offsets
+  // Convert buckets to placements with x offsets (top of ribbon)
   for (const [row, pins] of rowBuckets.entries()) {
     let xCursor = 0.125; // start with small margin
     for (const pin of pins) {
       placements.push({ pin, row, xOffsetInches: xCursor });
       citations.push(pin.manualCitation);
-      xCursor += pin.widthInches + pin.requiredSpacingInches;
+      xCursor += pin.heightInches + pin.requiredSpacingInches;
     }
+  }
+
+  // Place mandatory pins (DAR Insignia) below the ribbon
+  for (const pin of mandatoryPins) {
+    const belowRibbonOffset = config.ribbonLengthInches + 0.25; // below the ribbon
+    placements.push({
+      pin,
+      row: Math.ceil(config.rowCount / 2), // center column
+      xOffsetInches: belowRibbonOffset,
+    });
+    citations.push(pin.manualCitation);
   }
 
   // Deduplicate citations

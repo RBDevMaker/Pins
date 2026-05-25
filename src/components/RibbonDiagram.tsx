@@ -8,22 +8,30 @@ interface Props {
 const SCALE = 80; // pixels per inch for display
 
 export default function RibbonDiagram({ layout, config }: Props) {
-  const ribbonW = config.ribbonLengthInches * SCALE;
-  const rowHeight = config.ribbonWidthInches / config.rowCount * SCALE;
-  const ribbonH = config.ribbonWidthInches * SCALE;
+  // Vertical orientation: ribbon length goes top-to-bottom, rows go left-to-right
+  const ribbonH = config.ribbonLengthInches * SCALE;
+  const colWidth = config.ribbonWidthInches / config.rowCount * SCALE;
+  const ribbonW = config.ribbonWidthInches * SCALE;
+
+  // Extra space below ribbon for the insignia pin
+  const hasBelowPins = layout.placements.some(
+    (p) => p.xOffsetInches > config.ribbonLengthInches
+  );
+  const extraBelow = hasBelowPins ? 1.5 * SCALE : 0;
+  const totalH = ribbonH + extraBelow;
 
   return (
     <div style={{ marginTop: '1rem' }}>
       <h3>Layout Diagram</h3>
       <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>
-        Scale: 1 inch = {SCALE}px
+        Scale: 1 inch = {SCALE}px | Vertical orientation (top = start of ribbon)
       </p>
       <svg
         width={ribbonW + 20}
-        height={ribbonH + 20}
-        viewBox={`0 0 ${ribbonW + 20} ${ribbonH + 20}`}
+        height={totalH + 40}
+        viewBox={`0 0 ${ribbonW + 20} ${totalH + 40}`}
         role="img"
-        aria-label={`Ribbon diagram showing ${layout.placements.length} pins across ${config.rowCount} rows`}
+        aria-label={`Ribbon diagram showing ${layout.placements.length} pins across ${config.rowCount} rows, vertical orientation`}
         style={{ border: '1px solid #ddd', background: '#fff', borderRadius: '4px' }}
       >
         {/* Ribbon background */}
@@ -36,23 +44,37 @@ export default function RibbonDiagram({ layout, config }: Props) {
           rx={3}
         />
 
-        {/* Row dividers */}
+        {/* Column dividers (rows are now columns in vertical view) */}
         {Array.from({ length: config.rowCount - 1 }, (_, i) => (
           <line
             key={i}
-            x1={10}
-            y1={10 + rowHeight * (i + 1)}
-            x2={10 + ribbonW}
-            y2={10 + rowHeight * (i + 1)}
+            x1={10 + colWidth * (i + 1)}
+            y1={10}
+            x2={10 + colWidth * (i + 1)}
+            y2={10 + ribbonH}
             stroke="rgba(255,255,255,0.3)"
             strokeDasharray="4 2"
           />
         ))}
 
-        {/* Pins */}
+        {/* Row labels */}
+        {Array.from({ length: config.rowCount }, (_, i) => (
+          <text
+            key={`label-${i}`}
+            x={10 + i * colWidth + colWidth / 2}
+            y={ribbonH + 24}
+            textAnchor="middle"
+            fontSize={10}
+            fill="#666"
+          >
+            Row {i + 1}
+          </text>
+        ))}
+
+        {/* Pins — x offset becomes y offset, row becomes column */}
         {layout.placements.map((p, i) => {
-          const px = 10 + p.xOffsetInches * SCALE;
-          const py = 10 + (p.row - 1) * rowHeight + (rowHeight - p.pin.heightInches * SCALE) / 2;
+          const px = 10 + (p.row - 1) * colWidth + (colWidth - p.pin.widthInches * SCALE) / 2;
+          const py = 10 + p.xOffsetInches * SCALE;
           const pw = p.pin.widthInches * SCALE;
           const ph = p.pin.heightInches * SCALE;
 
@@ -76,8 +98,8 @@ export default function RibbonDiagram({ layout, config }: Props) {
                 fontSize={Math.min(9, pw / 4)}
                 fill="#1a1a2e"
               >
-                {p.pin.name.length > 10
-                  ? p.pin.name.slice(0, 8) + '…'
+                {p.pin.name.length > 12
+                  ? p.pin.name.slice(0, 10) + '…'
                   : p.pin.name}
               </text>
             </g>
