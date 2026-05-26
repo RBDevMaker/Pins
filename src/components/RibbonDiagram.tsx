@@ -1,19 +1,20 @@
 import { LayoutResult, LayoutConfig } from '../engine/placementEngine';
+import { PinRule, getPinImageUrl } from '../data/pinRules';
 
 interface Props {
   layout: LayoutResult;
   config: LayoutConfig;
+  onRemovePin?: (pin: PinRule) => void;
 }
 
-const SCALE = 80; // pixels per inch for display
+const SCALE = 160; // pixels per inch for length
+const WIDTH_SCALE = 300; // pixels per inch for width
 
-export default function RibbonDiagram({ layout, config }: Props) {
-  // Vertical orientation: ribbon length goes top-to-bottom, rows go left-to-right
+export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
   const ribbonH = config.ribbonLengthInches * SCALE;
-  const colWidth = config.ribbonWidthInches / config.rowCount * SCALE;
-  const ribbonW = config.ribbonWidthInches * SCALE;
+  const colWidth = 150; // fixed column width per row in pixels
+  const ribbonW = colWidth * config.rowCount;
 
-  // Extra space below ribbon for the insignia pin
   const hasBelowPins = layout.placements.some(
     (p) => p.xOffsetInches > config.ribbonLengthInches
   );
@@ -22,90 +23,142 @@ export default function RibbonDiagram({ layout, config }: Props) {
 
   return (
     <div style={{ marginTop: '1rem' }}>
-      <h3>Layout Diagram</h3>
-      <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>
-        Scale: 1 inch = {SCALE}px | Vertical orientation (top = start of ribbon)
+      <h3 style={{ color: '#fff' }}>Layout Diagram</h3>
+      <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>
+        {config.ribbonLengthInches}" × {config.ribbonWidthInches}" ribbon
       </p>
-      <svg
-        width={ribbonW + 20}
-        height={totalH + 40}
-        viewBox={`0 0 ${ribbonW + 20} ${totalH + 40}`}
+
+      {/* Ribbon container */}
+      <div
         role="img"
-        aria-label={`Ribbon diagram showing ${layout.placements.length} pins across ${config.rowCount} rows, vertical orientation`}
-        style={{ border: '1px solid #ddd', background: '#fff', borderRadius: '4px' }}
+        aria-label={`Ribbon diagram showing ${layout.placements.length} pins across ${config.rowCount} rows`}
+        style={{
+          position: 'relative',
+          width: ribbonW,
+          height: totalH,
+          borderRadius: '4px',
+          overflow: 'visible',
+        }}
       >
         {/* Ribbon background */}
-        <rect
-          x={10}
-          y={10}
-          width={ribbonW}
-          height={ribbonH}
-          fill="#1a3a6b"
-          rx={3}
-        />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: ribbonW,
+          height: ribbonH,
+          background: 'linear-gradient(180deg, #1a3a6b 0%, #1e4080 100%)',
+          borderRadius: '4px',
+          border: '2px solid rgba(212,175,55,0.5)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        }} />
 
-        {/* Column dividers (rows are now columns in vertical view) */}
+        {/* Column dividers */}
         {Array.from({ length: config.rowCount - 1 }, (_, i) => (
-          <line
+          <div
             key={i}
-            x1={10 + colWidth * (i + 1)}
-            y1={10}
-            x2={10 + colWidth * (i + 1)}
-            y2={10 + ribbonH}
-            stroke="rgba(255,255,255,0.3)"
-            strokeDasharray="4 2"
+            style={{
+              position: 'absolute',
+              left: colWidth * (i + 1),
+              top: 0,
+              width: '1px',
+              height: ribbonH,
+              borderLeft: '1px dashed rgba(255,255,255,0.3)',
+            }}
           />
         ))}
 
         {/* Row labels */}
         {Array.from({ length: config.rowCount }, (_, i) => (
-          <text
+          <div
             key={`label-${i}`}
-            x={10 + i * colWidth + colWidth / 2}
-            y={ribbonH + 24}
-            textAnchor="middle"
-            fontSize={10}
-            fill="#666"
+            style={{
+              position: 'absolute',
+              left: i * colWidth,
+              top: ribbonH + 4,
+              width: colWidth,
+              textAlign: 'center',
+              fontSize: '10px',
+              color: 'rgba(255,255,255,0.7)',
+            }}
           >
             Row {i + 1}
-          </text>
+          </div>
         ))}
 
-        {/* Pins — x offset becomes y offset, row becomes column */}
+        {/* Pins */}
         {layout.placements.map((p, i) => {
-          const px = 10 + (p.row - 1) * colWidth + (colWidth - p.pin.widthInches * SCALE) / 2;
-          const py = 10 + p.xOffsetInches * SCALE;
-          const pw = p.pin.widthInches * SCALE;
+          const pw = Math.min(p.pin.widthInches * WIDTH_SCALE, colWidth - 10);
           const ph = p.pin.heightInches * SCALE;
+          const px = (p.row - 1) * colWidth + (colWidth - pw) / 2;
+          const py = p.xOffsetInches * SCALE;
+          const imgUrl = p.pin.imageUrl || getPinImageUrl(p.pin);
 
           return (
-            <g key={i}>
-              <rect
-                x={px}
-                y={py}
-                width={pw}
-                height={ph}
-                fill="#d4af37"
-                stroke="#8b7500"
-                strokeWidth={1}
-                rx={2}
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: px,
+                top: py,
+                width: pw,
+                height: ph,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+              }}
+            >
+              <img
+                src={imgUrl}
+                alt={p.pin.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.4))',
+                }}
               />
-              <text
-                x={px + pw / 2}
-                y={py + ph / 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={Math.min(9, pw / 4)}
-                fill="#1a1a2e"
-              >
-                {p.pin.name.length > 12
-                  ? p.pin.name.slice(0, 10) + '…'
+              <span style={{
+                fontSize: Math.min(9, pw / 6) + 'px',
+                color: '#fff',
+                textAlign: 'center',
+                marginTop: '2px',
+                textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                whiteSpace: 'nowrap',
+              }}>
+                {p.pin.name.length > 14
+                  ? p.pin.name.slice(0, 12) + '…'
                   : p.pin.name}
-              </text>
-            </g>
+              </span>
+              {onRemovePin && !p.pin.mandatory && (
+                <button
+                  onClick={() => onRemovePin(p.pin)}
+                  aria-label={`Remove ${p.pin.name}`}
+                  style={{
+                    position: 'absolute',
+                    top: -6,
+                    right: -6,
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    background: '#e53935',
+                    color: '#fff',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    lineHeight: '18px',
+                    textAlign: 'center',
+                    padding: 0,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  ×
+                </button>
+              )}
+            </div>
           );
         })}
-      </svg>
+      </div>
 
       {/* Warnings */}
       {layout.warnings.length > 0 && (
@@ -130,7 +183,7 @@ export default function RibbonDiagram({ layout, config }: Props) {
 
       {/* Citations */}
       {layout.citations.length > 0 && (
-        <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#555' }}>
+        <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
           <strong>Sources:</strong> {layout.citations.join('; ')}
         </div>
       )}

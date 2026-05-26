@@ -79,12 +79,12 @@ export function generateLayout(
     }
   }
 
-  // Place mandatory pins (DAR Insignia) below the ribbon
+  // Place mandatory pins (DAR Insignia) below the ribbon, far right
   for (const pin of mandatoryPins) {
     const belowRibbonOffset = config.ribbonLengthInches + 0.25; // below the ribbon
     placements.push({
       pin,
-      row: Math.ceil(config.rowCount / 2), // center column
+      row: 1, // far left column
       xOffsetInches: belowRibbonOffset,
     });
     citations.push(pin.manualCitation);

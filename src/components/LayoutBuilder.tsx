@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { PinRule, PIN_RULES } from '../data/pinRules';
 import { generateLayout, LayoutConfig } from '../engine/placementEngine';
 import PinSelector from './PinSelector';
@@ -7,10 +7,20 @@ import PinUploader from './PinUploader';
 
 export default function LayoutBuilder() {
   const [rowCount, setRowCount] = useState<1 | 2 | 3 | 4>(1);
-  const [ribbonLength, setRibbonLength] = useState(3.5);
-  const [ribbonWidth, setRibbonWidth] = useState(1.375);
+  const [ribbonLength, setRibbonLength] = useState(4);
+  const ribbonWidth = 1.5 * rowCount; // 1.5" per row
   const [selectedPins, setSelectedPins] = useState<PinRule[]>([]);
-  const [showDiagram, setShowDiagram] = useState(false);
+  const [showDiagram, setShowDiagram] = useState(true);
+  const [, setCategoryOverrides] = useState<Record<string, PinRule['category']>>({});
+
+  const handleChangeCategory = useCallback((pinId: string, newCategory: PinRule['category']) => {
+    setCategoryOverrides((prev) => ({ ...prev, [pinId]: newCategory }));
+    // Also update the PIN_RULES array in-place so it persists during session
+    const pin = PIN_RULES.find((p) => p.id === pinId);
+    if (pin) {
+      (pin as { category: string }).category = newCategory;
+    }
+  }, []);
 
   const mandatoryPins = PIN_RULES.filter((p) => p.mandatory);
   const allPinsForLayout = useMemo(
@@ -20,7 +30,7 @@ export default function LayoutBuilder() {
 
   const config: LayoutConfig = useMemo(
     () => ({ ribbonLengthInches: ribbonLength, ribbonWidthInches: ribbonWidth, rowCount }),
-    [ribbonLength, ribbonWidth, rowCount]
+    [ribbonLength, rowCount]
   );
 
   const layout = useMemo(
@@ -66,7 +76,7 @@ export default function LayoutBuilder() {
 
   return (
     <div style={{
-      maxWidth: '850px',
+      maxWidth: '1200px',
       margin: '0 auto',
       padding: '3rem 2rem 2.5rem',
     }}>
@@ -132,58 +142,56 @@ export default function LayoutBuilder() {
           </label>
 
           <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>
-            Length (inches)
-            <input
-              type="number"
-              step="0.25"
-              min="1"
-              max="24"
+            Length
+            <select
               value={ribbonLength}
               onChange={(e) => setRibbonLength(parseFloat(e.target.value))}
-              style={{ ...inputStyle, width: '6rem' }}
-            />
-          </label>
-
-          <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>
-            Width (inches)
-            <input
-              type="number"
-              step="0.125"
-              min="0.5"
-              max="4"
-              value={ribbonWidth}
-              onChange={(e) => setRibbonWidth(parseFloat(e.target.value))}
-              style={{ ...inputStyle, width: '6rem' }}
-            />
+              style={{ ...inputStyle, width: '8rem' }}
+            >
+              <option value={4}>4 inches</option>
+              <option value={6}>6 inches</option>
+              <option value={8}>8 inches</option>
+              <option value={10}>10 inches</option>
+              <option value={12}>12 inches</option>
+              <option value={14}>14 inches</option>
+            </select>
           </label>
         </div>
       </div>
 
-      {/* Pin selection */}
-      <PinSelector selectedPins={selectedPins} onTogglePin={handleTogglePin} />
+      {/* Two-column layout: Pin selection + Generated layout */}
+      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        {/* Left: Pin selection */}
+        <div style={{ flex: '1 1 350px', minWidth: '300px' }}>
+          <PinSelector selectedPins={selectedPins} onTogglePin={handleTogglePin} onChangeCategory={handleChangeCategory} />
+        </div>
 
-      {/* Generate button */}
-      <button
-        onClick={() => setShowDiagram(true)}
-        style={{
-          padding: '0.65rem 2rem',
-          background: 'linear-gradient(135deg, #d4af37 0%, #b8960c 100%)',
-          color: '#0a1628',
-          border: 'none',
-          borderRadius: '8px',
-          cursor: 'pointer',
-          fontSize: '0.95rem',
-          fontWeight: 600,
-          letterSpacing: '0.3px',
-          boxShadow: '0 4px 15px rgba(212,175,55,0.3)',
-          transition: 'transform 0.1s, box-shadow 0.1s',
-        }}
-      >
-        Generate Layout
-      </button>
+        {/* Right: Generate button + Diagram */}
+        <div style={{ flex: '1 1 350px', minWidth: '300px' }}>
+          <button
+            onClick={() => setShowDiagram(true)}
+            style={{
+              padding: '0.65rem 2rem',
+              background: 'linear-gradient(135deg, #d4af37 0%, #b8960c 100%)',
+              color: '#0a1628',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              letterSpacing: '0.3px',
+              boxShadow: '0 4px 15px rgba(212,175,55,0.3)',
+              transition: 'transform 0.1s, box-shadow 0.1s',
+              marginBottom: '1rem',
+            }}
+          >
+            Generate Layout
+          </button>
 
-      {/* Diagram */}
-      {showDiagram && <RibbonDiagram layout={layout} config={config} />}
+          {/* Diagram */}
+          {showDiagram && <RibbonDiagram layout={layout} config={config} onRemovePin={handleTogglePin} />}
+        </div>
+      </div>
 
       {/* Upload */}
       <PinUploader onUpload={handleUpload} />

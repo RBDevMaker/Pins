@@ -1,38 +1,52 @@
 import { useState } from 'react';
-import { PinRule, PIN_RULES } from '../data/pinRules';
+import { PinRule, PIN_RULES, getPinImageUrl } from '../data/pinRules';
+import PinDetailModal from './PinDetailModal';
 
 interface Props {
   selectedPins: PinRule[];
   onTogglePin: (pin: PinRule) => void;
+  onChangeCategory: (pinId: string, newCategory: PinRule['category']) => void;
 }
 
 const CATEGORIES: Record<string, string> = {
-  membership: 'Membership',
+  member: 'Member',
   officer: 'Officer',
-  ancestor: 'Ancestor',
   service: 'Service',
   honorary: 'Honorary',
+  commemorative: 'Commemorative',
+  training: 'Training & Volunteer Service',
+  clubs: 'Clubs & Boards',
+  junior: 'Junior & Page',
+  congress: 'Continental Congress',
+  states: 'States',
+  donation: 'Donation',
   other: 'Other',
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  membership: '#1565c0',
+  member: '#1565c0',
   officer: '#6a1b9a',
-  ancestor: '#2e7d32',
   service: '#e65100',
   honorary: '#c62828',
+  commemorative: '#00695c',
+  training: '#f57f17',
+  clubs: '#4527a0',
+  junior: '#d81b60',
+  congress: '#1a237e',
+  states: '#33691e',
+  donation: '#bf360c',
   other: '#546e7a',
 };
 
-export default function PinSelector({ selectedPins, onTogglePin }: Props) {
+export default function PinSelector({ selectedPins, onTogglePin, onChangeCategory }: Props) {
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [detailPin, setDetailPin] = useState<PinRule | null>(null);
 
   const isSelected = (pin: PinRule) =>
     selectedPins.some((p) => p.id === pin.id);
 
   const filtered = PIN_RULES.filter((pin) => {
-    if (pin.mandatory) return false;
     const matchesSearch = pin.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = filterCategory === 'all' || pin.category === filterCategory;
     return matchesSearch && matchesCategory;
@@ -45,29 +59,9 @@ export default function PinSelector({ selectedPins, onTogglePin }: Props) {
     grouped[pin.category].push(pin);
   }
 
-  const mandatoryPins = PIN_RULES.filter((p) => p.mandatory);
-
   return (
     <div style={{ marginBottom: '1rem' }}>
-      {/* Mandatory pins notice */}
-      {mandatoryPins.length > 0 && (
-        <div style={{
-          padding: '0.5rem 0.75rem',
-          background: '#e8f5e9',
-          border: '1px solid #a5d6a7',
-          borderRadius: '4px',
-          marginBottom: '0.75rem',
-          fontSize: '0.85rem',
-        }}>
-          <strong>Always included:</strong>{' '}
-          {mandatoryPins.map((p) => p.name).join(', ')}
-          <span style={{ color: '#555', marginLeft: '0.5rem' }}>
-            (required on all ribbon bars)
-          </span>
-        </div>
-      )}
-
-      <h3 style={{ marginBottom: '0.5rem' }}>Select Pins</h3>
+      <h3 style={{ marginBottom: '0.5rem', color: '#fff' }}>Select Pins</h3>
 
       {/* Search and filter row */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
@@ -107,8 +101,8 @@ export default function PinSelector({ selectedPins, onTogglePin }: Props) {
 
       {/* Scrollable pin list grouped by category */}
       <div style={{
-        maxHeight: '360px',
-        overflowY: 'scroll',
+        maxHeight: '700px',
+        overflowY: 'auto',
         border: '1px solid #ddd',
         borderRadius: '4px',
         background: '#fff',
@@ -149,46 +143,90 @@ export default function PinSelector({ selectedPins, onTogglePin }: Props) {
                 </div>
                 {/* Pins in this category */}
                 {pins.map((pin) => (
-                  <button
+                  <div
                     key={pin.id}
-                    onClick={() => onTogglePin(pin)}
-                    aria-pressed={isSelected(pin)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
+                      gap: '0.6rem',
                       width: '100%',
                       padding: '0.5rem 0.75rem',
-                      border: 'none',
                       borderBottom: '1px solid #eee',
                       background: isSelected(pin) ? '#e6f0ff' : '#fff',
-                      cursor: 'pointer',
-                      textAlign: 'left',
                       fontSize: '0.85rem',
                     }}
                   >
-                    <span>
-                      <strong>{pin.name}</strong>
-                      <span style={{ color: '#888', marginLeft: '0.5rem' }}>
-                        {pin.widthInches}" × {pin.heightInches}"
+                    {/* Clickable area to open detail */}
+                    <button
+                      onClick={() => setDetailPin(pin)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.6rem',
+                        flex: 1,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        padding: 0,
+                        fontSize: '0.85rem',
+                      }}
+                      aria-label={`View details for ${pin.name}`}
+                    >
+                      {/* Pin image thumbnail */}
+                      <img
+                        src={pin.imageUrl || getPinImageUrl(pin)}
+                        alt={pin.name}
+                        style={{
+                          width: '90px',
+                          height: '90px',
+                          objectFit: 'contain',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ flex: 1 }}>
+                        <strong>{pin.name}</strong>
+                        <span style={{ color: '#888', marginLeft: '0.5rem' }}>
+                          {pin.widthInches}" × {pin.heightInches}"
+                        </span>
                       </span>
-                    </span>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      padding: '0.15rem 0.4rem',
-                      borderRadius: '3px',
-                      background: isSelected(pin) ? '#0066cc' : '#eee',
-                      color: isSelected(pin) ? '#fff' : '#666',
-                    }}>
+                    </button>
+                    {/* Add/remove toggle button */}
+                    <button
+                      onClick={() => onTogglePin(pin)}
+                      aria-pressed={isSelected(pin)}
+                      aria-label={isSelected(pin) ? `Remove ${pin.name}` : `Add ${pin.name}`}
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '3px',
+                        background: isSelected(pin) ? '#0066cc' : '#eee',
+                        color: isSelected(pin) ? '#fff' : '#666',
+                        border: 'none',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
                       {isSelected(pin) ? '✓ Added' : '+'}
-                    </span>
-                  </button>
+                    </button>
+                  </div>
                 ))}
               </div>
             );
           })
         )}
       </div>
+
+      {/* Pin detail modal */}
+      {detailPin && (
+        <PinDetailModal
+          pin={detailPin}
+          isSelected={isSelected(detailPin)}
+          onToggle={() => onTogglePin(detailPin)}
+          onClose={() => setDetailPin(null)}
+          onChangeCategory={onChangeCategory}
+        />
+      )}
     </div>
   );
 }
