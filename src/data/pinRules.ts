@@ -220,7 +220,7 @@ const PIN_IMAGE_MAP: Record<string, string> = {
   'utah-centennial-pin': 'utah_centennial_pin.png',
   'utah-state-page-pin': 'utah_state_page_pin.png',
   'vermont-centennial-pin': 'vermont_centennial_pin.png',
-  'virginia-state-pin': 'virginia_centennial_pin.png',
+  'virginia-state-pin': 'Virginia_State_Pin.png',
   'volunteer': 'volunteer.png',
   'volunteer-field': 'volunteer_field.png',
   'war-of': 'war_of_1812.png',
@@ -240,7 +240,23 @@ export function getPinImageUrl(pin: PinRule): string {
     return `${PIN_IMAGE_BASE_URL}/${mapped}`;
   }
   // Fallback: DAR standard insignia image
-  return `${PIN_IMAGE_BASE_URL}/insignia.jpeg`;
+  return `${PIN_IMAGE_BASE_URL}/insignia.png`;
+}
+
+/**
+ * Get the original image URL (with background) for the selector list.
+ */
+export function getPinImageUrlOriginal(pin: PinRule): string {
+  const mapped = PIN_IMAGE_MAP[pin.id];
+  if (mapped) {
+    if (mapped.endsWith('.webp')) {
+      return `/pin-images-original/${mapped}`;
+    }
+    // Originals are .jpeg
+    const jpegName = mapped.replace('.png', '.jpeg');
+    return `/pin-images-original/${jpegName}`;
+  }
+  return `/pin-images-original/insignia.jpeg`;
 }
 
 export const PIN_RULES: PinRule[] = [
@@ -249,8 +265,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'dar-insignia',
     name: 'DAR Insignia Pin',
     category: 'member',
-    widthInches: 0.625,
-    heightInches: 0.625,
+    widthInches: 0.75,
+    heightInches: 1.0,
     allowedRows: [1],
     allowedSide: 'center',
     requiredSpacingInches: 0.125,
@@ -277,8 +293,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-officer',
     name: 'Chapter Officer Pin',
     category: 'officer',
-    widthInches: 0.375,
-    heightInches: 0.375,
+    widthInches: 1.375,
+    heightInches: 1.0,
     allowedRows: [1, 2, 3, 4],
     allowedSide: 'any',
     requiredSpacingInches: 0.0625,
@@ -290,7 +306,7 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-officer-bar',
     name: 'Chapter Officer Bar',
     category: 'officer',
-    widthInches: 0.375,
+    widthInches: 0.875,
     heightInches: 0.375,
     allowedRows: [1, 2, 3, 4],
     allowedSide: 'any',
@@ -303,8 +319,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-vice-regent',
     name: 'Chapter Vice Regent Pin',
     category: 'officer',
-    widthInches: 0.5,
-    heightInches: 0.5,
+    widthInches: 0.875,
+    heightInches: 0.375,
     allowedRows: [1],
     allowedSide: 'left',
     requiredSpacingInches: 0.125,
@@ -316,8 +332,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-chaplain',
     name: 'Chapter Chaplain Pin',
     category: 'officer',
-    widthInches: 0.5,
-    heightInches: 0.5,
+    widthInches: 0.875,
+    heightInches: 0.375,
     allowedRows: [1],
     allowedSide: 'left',
     requiredSpacingInches: 0.125,
@@ -329,8 +345,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-recording-secretary',
     name: 'Chapter Recording Secretary Pin',
     category: 'officer',
-    widthInches: 0.5,
-    heightInches: 0.5,
+    widthInches: 0.875,
+    heightInches: 0.375,
     allowedRows: [1],
     allowedSide: 'left',
     requiredSpacingInches: 0.125,
@@ -342,8 +358,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-treasurer',
     name: 'Chapter Treasurer Pin',
     category: 'officer',
-    widthInches: 0.5,
-    heightInches: 0.5,
+    widthInches: 0.875,
+    heightInches: 0.375,
     allowedRows: [1],
     allowedSide: 'left',
     requiredSpacingInches: 0.125,
@@ -355,8 +371,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-registrar',
     name: 'Chapter Registrar Pin',
     category: 'officer',
-    widthInches: 0.5,
-    heightInches: 0.5,
+    widthInches: 0.875,
+    heightInches: 0.375,
     allowedRows: [1],
     allowedSide: 'left',
     requiredSpacingInches: 0.125,
@@ -368,8 +384,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-historian',
     name: 'Chapter Historian Pin',
     category: 'officer',
-    widthInches: 0.5,
-    heightInches: 0.5,
+    widthInches: 0.875,
+    heightInches: 0.375,
     allowedRows: [1],
     allowedSide: 'left',
     requiredSpacingInches: 0.125,
@@ -381,8 +397,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-librarian',
     name: 'Chapter Librarian Pin',
     category: 'officer',
-    widthInches: 0.5,
-    heightInches: 0.5,
+    widthInches: 0.875,
+    heightInches: 0.375,
     allowedRows: [1],
     allowedSide: 'left',
     requiredSpacingInches: 0.125,
@@ -448,7 +464,7 @@ export const PIN_RULES: PinRule[] = [
     id: 'ancestor-bar',
     name: 'Ancestor Bar',
     category: 'member',
-    widthInches: 0.75,
+    widthInches: 1.75,
     heightInches: 0.25,
     allowedRows: [1, 2, 3, 4],
     allowedSide: 'any',
@@ -461,7 +477,7 @@ export const PIN_RULES: PinRule[] = [
     id: 'supplemental-ancestor-bar',
     name: 'Supplemental Ancestor Bar',
     category: 'member',
-    widthInches: 0.75,
+    widthInches: 1.75,
     heightInches: 0.25,
     allowedRows: [1, 2, 3, 4],
     allowedSide: 'any',
@@ -1365,8 +1381,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'chapter-bar',
     name: 'Chapter Bar',
     category: 'other',
-    widthInches: 0.375,
-    heightInches: 0.375,
+    widthInches: 1.75,
+    heightInches: 0.25,
     allowedRows: [1, 2, 3, 4],
     allowedSide: 'any',
     requiredSpacingInches: 0.0625,
@@ -3107,8 +3123,8 @@ export const PIN_RULES: PinRule[] = [
     id: 'virginia-state-pin',
     name: 'Virginia State Pin',
     category: 'states',
-    widthInches: 0.375,
-    heightInches: 0.375,
+    widthInches: 0.625,
+    heightInches: 0.9,
     allowedRows: [1, 2, 3, 4],
     allowedSide: 'any',
     requiredSpacingInches: 0.0625,

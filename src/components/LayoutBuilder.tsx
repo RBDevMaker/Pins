@@ -7,7 +7,7 @@ import PinUploader from './PinUploader';
 
 export default function LayoutBuilder() {
   const [rowCount, setRowCount] = useState<1 | 2 | 3 | 4>(1);
-  const [ribbonLength, setRibbonLength] = useState(4);
+  const [ribbonLength, setRibbonLength] = useState(6);
   const ribbonWidth = 1.5 * rowCount; // 1.5" per row
   const [selectedPins, setSelectedPins] = useState<PinRule[]>([]);
   const [showDiagram, setShowDiagram] = useState(true);
@@ -193,8 +193,17 @@ export default function LayoutBuilder() {
         </div>
       </div>
 
+      {/* Sources */}
+      {layout.citations.length > 0 && (
+        <div style={{ marginTop: '12rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
+          <strong>Sources:</strong> {layout.citations.join('; ')}
+        </div>
+      )}
+
       {/* Upload */}
-      <PinUploader onUpload={handleUpload} />
+      <div style={{ marginTop: '2rem' }}>
+        <PinUploader onUpload={handleUpload} />
+      </div>
     </div>
   );
 }

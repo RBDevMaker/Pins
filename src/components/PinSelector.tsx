@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PinRule, PIN_RULES, getPinImageUrl } from '../data/pinRules';
+import { PinRule, PIN_RULES, getPinImageUrlOriginal } from '../data/pinRules';
 import PinDetailModal from './PinDetailModal';
 
 interface Props {
@@ -101,7 +101,7 @@ export default function PinSelector({ selectedPins, onTogglePin, onChangeCategor
 
       {/* Scrollable pin list grouped by category */}
       <div style={{
-        maxHeight: '700px',
+        maxHeight: '900px',
         overflowY: 'auto',
         border: '1px solid #ddd',
         borderRadius: '4px',
@@ -175,7 +175,7 @@ export default function PinSelector({ selectedPins, onTogglePin, onChangeCategor
                     >
                       {/* Pin image thumbnail */}
                       <img
-                        src={pin.imageUrl || getPinImageUrl(pin)}
+                        src={pin.imageUrl || getPinImageUrlOriginal(pin)}
                         alt={pin.name}
                         style={{
                           width: '90px',

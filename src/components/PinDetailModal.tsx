@@ -1,4 +1,4 @@
-import { PinRule, getPinImageUrl } from '../data/pinRules';
+import { PinRule, getPinImageUrlOriginal } from '../data/pinRules';
 
 interface Props {
   pin: PinRule;
@@ -82,7 +82,7 @@ export default function PinDetailModal({ pin, isSelected, onToggle, onClose, onC
           borderRadius: '8px',
         }}>
           <img
-            src={pin.imageUrl || getPinImageUrl(pin)}
+            src={pin.imageUrl || getPinImageUrlOriginal(pin)}
             alt={pin.name}
             style={{
               maxWidth: '400px',

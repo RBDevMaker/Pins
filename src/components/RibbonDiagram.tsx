@@ -7,20 +7,21 @@ interface Props {
   onRemovePin?: (pin: PinRule) => void;
 }
 
-const SCALE = 96; // pixels per inch — true scale
-const RIBBON_WIDTH_PX = 140; // ribbon strip width
+const RIBBON_WIDTH_PX = 160; // ribbon strip width
 const RIBBON_GAP = 4; // gap between ribbon strips in pixels
 
 export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
-  const ribbonH = config.ribbonLengthInches * SCALE;
+  const pxPerInch = RIBBON_WIDTH_PX / 1.5; // everything scaled to ribbon width
+  const ribbonH = config.ribbonLengthInches * pxPerInch;
   const totalW = config.rowCount * RIBBON_WIDTH_PX + (config.rowCount - 1) * RIBBON_GAP;
 
   // Extra space below ribbon for the insignia pin
   const hasBelowPins = layout.placements.some(
     (p) => p.xOffsetInches > config.ribbonLengthInches
   );
-  const extraBelow = hasBelowPins ? 1.2 * SCALE : 0;
-  const totalH = ribbonH + extraBelow + 30;
+  const extraBelow = hasBelowPins ? 1.5 * pxPerInch : 0;
+  const LABEL_HEIGHT = 20;
+  const totalH = LABEL_HEIGHT + ribbonH + extraBelow + 30;
 
   return (
     <div style={{ marginTop: '1rem' }}>
@@ -42,35 +43,39 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
       >
         {/* Ribbon strips */}
         {Array.from({ length: config.rowCount }, (_, i) => {
-          const cornerCut = 36; // pixels for the diagonal corner clip
+          const cornerCut = 28;
+          // Single row gets a pointed bottom (V-shape), multi-row gets clipped corners
+          const clipPath = config.rowCount === 1
+            ? `polygon(0 0, 100% 0, 100% calc(100% - ${cornerCut * 1.5}px), 50% 100%, 0 calc(100% - ${cornerCut * 1.5}px))`
+            : `polygon(0 0, 100% 0, 100% calc(100% - ${cornerCut}px), calc(100% - ${cornerCut}px) 100%, ${cornerCut}px 100%, 0 calc(100% - ${cornerCut}px))`;
           return (
             <div
               key={`ribbon-${i}`}
               style={{
                 position: 'absolute',
                 left: i * (RIBBON_WIDTH_PX + RIBBON_GAP),
-                top: 0,
+                top: LABEL_HEIGHT,
                 width: RIBBON_WIDTH_PX,
                 height: ribbonH,
                 background: 'linear-gradient(180deg, #1a3a6b 0%, #162f58 100%)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
-                borderLeft: '22px solid #fff',
-                borderRight: '22px solid #fff',
+                borderLeft: '30px solid #fff',
+                borderRight: '30px solid #fff',
                 borderTop: '1px solid rgba(212,175,55,0.3)',
-                clipPath: `polygon(0 0, 100% 0, 100% calc(100% - ${cornerCut}px), calc(100% - ${cornerCut}px) 100%, ${cornerCut}px 100%, 0 calc(100% - ${cornerCut}px))`,
+                clipPath,
               }}
             />
           );
         })}
 
-        {/* Row labels at bottom */}
+        {/* Row labels at top */}
         {Array.from({ length: config.rowCount }, (_, i) => (
           <div
             key={`label-${i}`}
             style={{
               position: 'absolute',
               left: i * (RIBBON_WIDTH_PX + RIBBON_GAP),
-              top: ribbonH + 4,
+              top: 0,
               width: RIBBON_WIDTH_PX,
               textAlign: 'center',
               fontSize: '10px',
@@ -83,11 +88,12 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
 
         {/* Pins */}
         {layout.placements.map((p, i) => {
-          const pinW = Math.min(p.pin.widthInches * SCALE * 1.2, RIBBON_WIDTH_PX - 16);
-          const pinH = p.pin.heightInches * SCALE * 1.2;
+          const pinScale = p.pin.mandatory ? 2.6 : 2;
+          const pinW = p.pin.widthInches * pxPerInch * pinScale;
+          const pinH = p.pin.heightInches * pxPerInch * pinScale;
           const stripLeft = (p.row - 1) * (RIBBON_WIDTH_PX + RIBBON_GAP);
           const px = stripLeft + (RIBBON_WIDTH_PX - pinW) / 2;
-          const py = p.xOffsetInches * SCALE;
+          const py = LABEL_HEIGHT + p.xOffsetInches * pxPerInch;
           const imgUrl = p.pin.imageUrl || getPinImageUrl(p.pin);
 
           return (
@@ -97,10 +103,9 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
                 position: 'absolute',
                 left: px,
                 top: py,
-                width: pinW,
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
+                gap: '4px',
               }}
             >
               <img
@@ -108,24 +113,21 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
                 alt={p.pin.name}
                 style={{
                   width: pinW,
-                  height: pinH,
+                  height: 'auto',
+                  maxHeight: pinH * 1.5,
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.4))',
                 }}
               />
               <span style={{
-                fontSize: '8px',
+                fontSize: '11px',
                 color: '#fff',
-                textAlign: 'center',
-                marginTop: '1px',
                 textShadow: '0 1px 2px rgba(0,0,0,0.6)',
                 whiteSpace: 'nowrap',
-                maxWidth: RIBBON_WIDTH_PX - 8,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                marginLeft: '4px',
               }}>
-                {p.pin.name.length > 16
-                  ? p.pin.name.slice(0, 14) + '…'
+                {p.pin.name.length > 20
+                  ? p.pin.name.slice(0, 18) + '…'
                   : p.pin.name}
               </span>
               {onRemovePin && !p.pin.mandatory && (
@@ -133,20 +135,19 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
                   onClick={() => onRemovePin(p.pin)}
                   aria-label={`Remove ${p.pin.name}`}
                   style={{
-                    position: 'absolute',
-                    top: -6,
-                    right: -6,
-                    width: '18px',
-                    height: '18px',
+                    width: '16px',
+                    height: '16px',
                     borderRadius: '50%',
                     background: '#e53935',
                     color: '#fff',
                     border: 'none',
                     cursor: 'pointer',
-                    fontSize: '11px',
-                    lineHeight: '18px',
+                    fontSize: '10px',
+                    lineHeight: '16px',
                     textAlign: 'center',
                     padding: 0,
+                    marginLeft: '3px',
+                    flexShrink: 0,
                     boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
                   }}
                 >
@@ -176,13 +177,6 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
               <li key={i}>{w}</li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {/* Citations */}
-      {layout.citations.length > 0 && (
-        <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-          <strong>Sources:</strong> {layout.citations.join('; ')}
         </div>
       )}
     </div>

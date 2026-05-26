@@ -71,17 +71,17 @@ export function generateLayout(
 
   // Convert buckets to placements with x offsets (top of ribbon)
   for (const [row, pins] of rowBuckets.entries()) {
-    let xCursor = 0.125; // start with small margin
+    let xCursor = 0.35; // start with margin from top
     for (const pin of pins) {
       placements.push({ pin, row, xOffsetInches: xCursor });
       citations.push(pin.manualCitation);
-      xCursor += pin.heightInches + pin.requiredSpacingInches;
+      xCursor += pin.heightInches + pin.requiredSpacingInches + 0.15;
     }
   }
 
   // Place mandatory pins (DAR Insignia) below the ribbon, far right
   for (const pin of mandatoryPins) {
-    const belowRibbonOffset = config.ribbonLengthInches + 0.25; // below the ribbon
+    const belowRibbonOffset = config.ribbonLengthInches - 0.6; // overlapping bottom of ribbon
     placements.push({
       pin,
       row: 1, // far left column
