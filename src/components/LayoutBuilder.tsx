@@ -85,7 +85,6 @@ export default function LayoutBuilder() {
         textAlign: 'center',
         marginBottom: '2rem',
         background: '#ffffff',
-        margin: '0 -2rem 2rem -2rem',
         padding: '2.5rem 2rem 2rem',
         borderRadius: '12px',
         boxShadow: '0 4px 20px rgba(0,0,0,0.1)',

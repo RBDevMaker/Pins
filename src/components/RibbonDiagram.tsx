@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { LayoutResult, LayoutConfig } from '../engine/placementEngine';
 import { PinRule, getPinImageUrl } from '../data/pinRules';
 
@@ -7,15 +8,16 @@ interface Props {
   onRemovePin?: (pin: PinRule) => void;
 }
 
-const RIBBON_WIDTH_PX = 160; // ribbon strip width
-const RIBBON_GAP = 4; // gap between ribbon strips in pixels
+const RIBBON_WIDTH_PX = 160;
+const RIBBON_GAP = 4;
 
 export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
-  const pxPerInch = RIBBON_WIDTH_PX / 1.5; // everything scaled to ribbon width
+  const pxPerInch = RIBBON_WIDTH_PX / 1.5;
   const ribbonH = config.ribbonLengthInches * pxPerInch;
   const totalW = config.rowCount * RIBBON_WIDTH_PX + (config.rowCount - 1) * RIBBON_GAP;
+  const [hoveredPin, setHoveredPin] = useState<string | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  // Extra space below ribbon for the insignia pin
   const hasBelowPins = layout.placements.some(
     (p) => p.xOffsetInches > config.ribbonLengthInches
   );
@@ -40,11 +42,14 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
           height: totalH,
           margin: '0 auto',
         }}
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        }}
       >
         {/* Ribbon strips */}
         {Array.from({ length: config.rowCount }, (_, i) => {
           const cornerCut = 28;
-          // Single row gets a pointed bottom (V-shape), multi-row gets clipped corners
           const clipPath = config.rowCount === 1
             ? `polygon(0 0, 100% 0, 100% calc(100% - ${cornerCut * 1.5}px), 50% 100%, 0 calc(100% - ${cornerCut * 1.5}px))`
             : `polygon(0 0, 100% 0, 100% calc(100% - ${cornerCut}px), calc(100% - ${cornerCut}px) 100%, ${cornerCut}px 100%, 0 calc(100% - ${cornerCut}px))`;
@@ -95,6 +100,7 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
           const px = stripLeft + (RIBBON_WIDTH_PX - pinW) / 2;
           const py = LABEL_HEIGHT + p.xOffsetInches * pxPerInch;
           const imgUrl = p.pin.imageUrl || getPinImageUrl(p.pin);
+          const isHovered = hoveredPin === p.pin.id + '-' + i;
 
           return (
             <div
@@ -106,7 +112,12 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
+                cursor: 'pointer',
+                transition: 'transform 0.15s ease',
+                transform: isHovered ? 'scale(1.08)' : 'scale(1)',
               }}
+              onMouseEnter={() => setHoveredPin(p.pin.id + '-' + i)}
+              onMouseLeave={() => setHoveredPin(null)}
             >
               <img
                 src={imgUrl}
@@ -116,20 +127,24 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
                   height: 'auto',
                   maxHeight: pinH * 1.5,
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.4))',
+                  filter: isHovered
+                    ? 'drop-shadow(0 3px 8px rgba(212,175,55,0.6))'
+                    : 'drop-shadow(0 1px 3px rgba(0,0,0,0.4))',
+                  transition: 'filter 0.15s ease',
                 }}
               />
-              <span style={{
-                fontSize: '11px',
-                color: '#fff',
-                textShadow: '0 1px 2px rgba(0,0,0,0.6)',
-                whiteSpace: 'nowrap',
-                marginLeft: '4px',
-              }}>
-                {p.pin.name.length > 20
-                  ? p.pin.name.slice(0, 18) + '…'
-                  : p.pin.name}
-              </span>
+              {/* Only show label for DAR Insignia */}
+              {p.pin.mandatory && (
+                <span style={{
+                  fontSize: '11px',
+                  color: '#fff',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                  whiteSpace: 'nowrap',
+                  marginLeft: '4px',
+                }}>
+                  {p.pin.name}
+                </span>
+              )}
               {onRemovePin && !p.pin.mandatory && (
                 <button
                   onClick={() => onRemovePin(p.pin)}
@@ -149,6 +164,8 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
                     marginLeft: '3px',
                     flexShrink: 0,
                     boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+                    opacity: isHovered ? 1 : 0.6,
+                    transition: 'opacity 0.15s ease',
                   }}
                 >
                   ×
@@ -157,6 +174,28 @@ export default function RibbonDiagram({ layout, config, onRemovePin }: Props) {
             </div>
           );
         })}
+
+        {/* Tooltip following cursor */}
+        {hoveredPin && (
+          <div style={{
+            position: 'absolute',
+            left: mousePos.x + 12,
+            top: mousePos.y - 28,
+            background: 'rgba(26,47,90,0.95)',
+            color: '#fff',
+            padding: '4px 10px',
+            borderRadius: '6px',
+            fontSize: '11px',
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            border: '1px solid rgba(212,175,55,0.4)',
+            zIndex: 10,
+          }}>
+            {layout.placements.find((p, i) => p.pin.id + '-' + i === hoveredPin)?.pin.name}
+          </div>
+        )}
       </div>
 
       {/* Warnings */}

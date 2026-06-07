@@ -75,7 +75,7 @@ export function generateLayout(
     for (const pin of pins) {
       placements.push({ pin, row, xOffsetInches: xCursor });
       citations.push(pin.manualCitation);
-      xCursor += pin.heightInches + pin.requiredSpacingInches + 0.15;
+      xCursor += pin.heightInches + pin.requiredSpacingInches + 0.5;
     }
   }
 
